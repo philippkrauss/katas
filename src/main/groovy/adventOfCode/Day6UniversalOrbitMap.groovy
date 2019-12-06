@@ -3,7 +3,7 @@ package adventOfCode
 /**
  * https://adventofcode.com/2019/day/6
  */
-class UniversalOrbitMap {
+class Day6UniversalOrbitMap {
 
 	int calculateOrbits(String map) {
 		Set<String> individuals = []
