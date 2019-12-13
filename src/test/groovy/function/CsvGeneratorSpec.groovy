@@ -1,4 +1,4 @@
-package function.csv
+package function
 
 import spock.lang.Specification
 import spock.lang.Unroll
