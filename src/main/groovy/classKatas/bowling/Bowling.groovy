@@ -7,8 +7,7 @@ import groovy.transform.ToString
  * https://ccd-school.de/coding-dojo/class-katas/bowling/
  */
 class Bowling {
-	public static int MAX_NUMBER_OF_FRAMES = 10
-	private final List<Frame> frames = [new Frame()]
+	final List<Frame> frames = [new Frame()]
 
 	void addRoll(int pins) {
 		if (frames[-1].complete) {
@@ -19,10 +18,6 @@ class Bowling {
 
 	private void addFrame() {
 		frames << (frames.size() < 9 ? new Frame() : new LastFrame())
-	}
-
-	List<Frame> getFrames() {
-		frames
 	}
 
 	int getTotalScore() {
@@ -39,31 +34,11 @@ class Bowling {
 class Frame {
 	List<Integer> pinsRolled = []
 	int score = 0
-	private int rollCounter = 0
+	RollUpdater rollUpdater = new FirstRollUpdater(frame: this)
 
 	void addRoll(int roll) {
-
-		switch (rollCounter) {
-			case 0:
-				pinsRolled << roll
-				score += roll
-				break
-			case 1:
-				if (strike) {
-					score += roll
-				}
-				if (pinsRolled[0] < 10) {
-					pinsRolled << roll
-					score += roll
-				}
-				break
-			case 2:
-				if (strike || spare) {
-					score += roll
-				}
-				break
-		}
-		rollCounter++
+		rollUpdater.updateRoll(roll)
+		rollUpdater = rollUpdater.next()
 	}
 
 	boolean isComplete() {
@@ -99,5 +74,65 @@ class LastFrame extends Frame {
 			return true
 		}
 		return false
+	}
+}
+
+
+interface RollUpdater {
+	void updateRoll(int roll)
+
+	RollUpdater next()
+}
+
+class FirstRollUpdater implements RollUpdater {
+	Frame frame
+
+	void updateRoll(int roll) {
+		frame.pinsRolled << roll
+		frame.score += roll
+	}
+
+	RollUpdater next() {
+		return new SecondRollUpdater(frame: frame)
+	}
+}
+
+class SecondRollUpdater implements RollUpdater {
+	Frame frame
+
+	void updateRoll(int roll) {
+		if (frame.strike) {
+			frame.score += roll
+		}
+		if (frame.pinsRolled[0] < 10) {
+			frame.pinsRolled << roll
+			frame.score += roll
+		}
+	}
+
+	RollUpdater next() {
+		return new ThirdRollUpdater(frame: frame)
+	}
+}
+
+class ThirdRollUpdater implements RollUpdater {
+	Frame frame
+
+	void updateRoll(int roll) {
+		if (frame.strike || frame.spare) {
+			frame.score += roll
+		}
+	}
+
+	RollUpdater next() {
+		return new NoopRollUpdater()
+	}
+}
+
+class NoopRollUpdater implements RollUpdater {
+	void updateRoll(int roll) {}
+
+	RollUpdater next() {
+		this
 	}
 }

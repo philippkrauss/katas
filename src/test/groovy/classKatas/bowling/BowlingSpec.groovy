@@ -1,6 +1,7 @@
 package classKatas.bowling
 
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class BowlingSpec extends Specification {
 
