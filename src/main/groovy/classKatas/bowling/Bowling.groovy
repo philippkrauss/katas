@@ -11,27 +11,14 @@ class Bowling {
 	private final List<Frame> frames = [new Frame()]
 
 	void addRoll(int pins) {
-		if (frames.last().isComplete() && frames.size() < MAX_NUMBER_OF_FRAMES) {
-			frames << new Frame()
+		if (frames[-1].complete) {
+			addFrame()
 		}
-		Frame currentFrame = frames.last()
-		currentFrame.addRoll(pins)
-		if (frames.size() > 1) {
-			Frame previousFrame = frames[-2]
-			if (currentFrame.pinsRolled.size() <= 2 && previousFrame.strike) {
-				previousFrame.addScore(pins)
-			}
-			if (currentFrame.pinsRolled.size() == 1 && previousFrame.spare) {
-				previousFrame.addScore(pins)
-			}
-		}
-		if (frames.size() > 2) {
-			Frame previousPreviousFrame = frames[-3]
-			Frame previousFrame = frames[-2]
-			if (currentFrame.pinsRolled.size() == 1 && previousFrame.pinsRolled.size() == 1) {
-				previousPreviousFrame.addScore(pins)
-			}
-		}
+		frames.each { it.addRoll(pins) }
+	}
+
+	private void addFrame() {
+		frames << (frames.size() < 9 ? new Frame() : new LastFrame())
 	}
 
 	List<Frame> getFrames() {
@@ -43,38 +30,40 @@ class Bowling {
 	}
 
 	boolean isOver() {
-		return frames.size() == 10 && frames.last().completeLastFrame
+		return frames.size() == 10 && frames[-1].complete
 	}
 }
 
 @EqualsAndHashCode
-@ToString(includePackage = false)
+@ToString(includePackage = false, includes = ['pinsRolled', 'score'])
 class Frame {
 	List<Integer> pinsRolled = []
 	int score = 0
-
-	Frame() {}
-
-	Frame(List<Integer> pinsRolled, int score) {
-		this.pinsRolled = pinsRolled
-		this.score = score
-	}
+	private int rollCounter = 0
 
 	void addRoll(int roll) {
-		pinsRolled << roll
-		score += roll
-	}
 
-	void addScore(int roll) {
-		score += roll
-	}
-
-	boolean isStrike() {
-		return pinsRolled.size() == 1 && pinsRolled[0] == 10
-	}
-
-	boolean isSpare() {
-		return pinsRolled.size() == 2 && pinsRolled[0] + pinsRolled[1] == 10
+		switch (rollCounter) {
+			case 0:
+				pinsRolled << roll
+				score += roll
+				break
+			case 1:
+				if (strike) {
+					score += roll
+				}
+				if (pinsRolled[0] < 10) {
+					pinsRolled << roll
+					score += roll
+				}
+				break
+			case 2:
+				if (strike || spare) {
+					score += roll
+				}
+				break
+		}
+		rollCounter++
 	}
 
 	boolean isComplete() {
@@ -87,7 +76,22 @@ class Frame {
 		return false
 	}
 
-	boolean isCompleteLastFrame() {
+	boolean isStrike() {
+		return pinsRolled.size() == 1 && pinsRolled[0] == 10
+	}
+
+	boolean isSpare() {
+		return pinsRolled.size() == 2 && pinsRolled[0] + pinsRolled[1] == 10
+	}
+}
+
+class LastFrame extends Frame {
+	void addRoll(int roll) {
+		pinsRolled << roll
+		score += roll
+	}
+
+	boolean isComplete() {
 		if (pinsRolled.size() == 3) {
 			return true
 		}
@@ -96,5 +100,4 @@ class Frame {
 		}
 		return false
 	}
-
 }
